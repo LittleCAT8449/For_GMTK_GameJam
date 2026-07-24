@@ -8,6 +8,10 @@ public class FoodPickup : MonoBehaviour
     {
         if (other.CompareTag(playerTag))
         {
+            Food food = GetComponent<Food>();
+            if (food != null && food.itemData != null)
+                Inventory.instance?.AddItem(food.itemData);
+
             Destroy(gameObject);
         }
     }
