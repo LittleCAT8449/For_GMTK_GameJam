@@ -12,6 +12,8 @@ public class FoodPickup : MonoBehaviour
             if (food != null && food.itemData != null)
                 Inventory.instance?.AddItem(food.itemData);
 
+            OneTimeTip.FindByTipId("food")?.Show();
+
             Destroy(gameObject);
         }
     }

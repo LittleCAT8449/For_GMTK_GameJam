@@ -8,4 +8,5 @@ public class ItemData : ScriptableObject
    public int itemID;
    public string itemName;
    public Sprite itemIcon;
+   public int healAmount = 1;
 }

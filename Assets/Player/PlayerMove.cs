@@ -4,31 +4,40 @@ using UnityEngine;
 public class PlayerMove : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float maxSpeed = 8f;
-    [SerializeField] private float acceleration = 60f;
+    [SerializeField] private float _maxSpeed = 8f;
+    [SerializeField] private float _acceleration = 60f;
     [SerializeField] private float deceleration = 50f;
-    [SerializeField] private float airControlMultiplier = 0.3f;
+    [SerializeField] private float _airControlMultiplier = 0.3f;
 
     [Header("Jump")]
-    [SerializeField] private float jumpForce = 12f;
+    [SerializeField] private float _jumpForce = 12f;
     [SerializeField] private int maxJumps = 2;
 
     [Header("Gravity")]
-    [SerializeField] private float gravityMultiplier = 1f;
-    [SerializeField] private float fallGravityMultiplier = 2f;
+    [SerializeField] private float _gravityMultiplier = 1f;
+    [SerializeField] private float _fallGravityMultiplier = 2f;
 
     [Header("Crouch")]
-    [SerializeField] private float crouchHeight = 0.6f;
+    [SerializeField] private float _crouchHeight = 0.6f;
     [SerializeField] private float crouchSpeedMultiplier = 0.5f;
 
     [Header("Wall Climb")]
-    [SerializeField] private float wallClimbSpeed = 3f;
+    [SerializeField] private float _wallClimbSpeed = 3f;
     [SerializeField] private float wallSlideSpeed = 1f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Vector2 groundCheckSize = new Vector2(0.8f, 0.1f);
     [SerializeField] private LayerMask groundLayer;
+
+    public float maxSpeed => _maxSpeed;
+    public float acceleration => _acceleration;
+    public float airControlMultiplier => _airControlMultiplier;
+    public float jumpForce => _jumpForce;
+    public float gravityMultiplier => _gravityMultiplier;
+    public float fallGravityMultiplier => _fallGravityMultiplier;
+    public float crouchHeight => _crouchHeight;
+    public float wallClimbSpeed => _wallClimbSpeed;
 
     private Rigidbody2D rb;
     private Collider2D col;
@@ -46,6 +55,10 @@ public class PlayerMove : MonoBehaviour
     private bool jumpPressed;
     private float wallClimbInput;
     private int jumpCount;
+
+    public bool IsSwimming { get; set; }
+    public bool IsOnLadder { get; set; }
+    public bool IsOnCeiling { get; set; }
 
     private void Awake()
     {
@@ -67,6 +80,8 @@ public class PlayerMove : MonoBehaviour
 
     private void Update()
     {
+        if (IsSwimming || IsOnLadder || IsOnCeiling) return;
+
         moveInput = Input.GetAxisRaw("Horizontal");
 
         CheckGround();
@@ -86,6 +101,8 @@ public class PlayerMove : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (IsSwimming || IsOnLadder || IsOnCeiling) return;
+
         if (jumpPressed)
         {
             HandleJump();
@@ -101,11 +118,11 @@ public class PlayerMove : MonoBehaviour
     {
         if (isWallClimbing) return;
 
-        float targetSpeed = moveInput * maxSpeed;
+        float targetSpeed = moveInput * _maxSpeed;
         if (isCrouching) targetSpeed *= crouchSpeedMultiplier;
 
-        float accel = isGrounded ? acceleration : acceleration * airControlMultiplier;
-        float decel = isGrounded ? deceleration : deceleration * airControlMultiplier;
+        float accel = isGrounded ? _acceleration : _acceleration * _airControlMultiplier;
+        float decel = isGrounded ? deceleration : deceleration * _airControlMultiplier;
 
         if (moveInput != 0)
         {
@@ -134,7 +151,7 @@ public class PlayerMove : MonoBehaviour
         if (isWallClimbing)
         {
             float dir = isTouchingWallLeft ? 1f : -1f;
-            rb.velocity = new Vector2(dir * jumpForce * 0.6f, jumpForce);
+            rb.velocity = new Vector2(dir * _jumpForce * 0.6f, _jumpForce);
             isWallClimbing = false;
             jumpCount = 1;
             return;
@@ -142,12 +159,12 @@ public class PlayerMove : MonoBehaviour
 
         if (isGrounded)
         {
-            rb.velocity = new Vector2(moveInput * maxSpeed, jumpForce);
+            rb.velocity = new Vector2(moveInput * _maxSpeed, _jumpForce);
             jumpCount = 1;
         }
         else if (jumpCount < maxJumps)
         {
-            rb.velocity = new Vector2(moveInput * maxSpeed, jumpForce);
+            rb.velocity = new Vector2(moveInput * _maxSpeed, _jumpForce);
             jumpCount++;
         }
     }
@@ -159,16 +176,14 @@ public class PlayerMove : MonoBehaviour
         if (crouchInput && isGrounded && !isCrouching)
         {
             isCrouching = true;
-            float deltaY = (originalSize.y - crouchHeight) * 0.5f;
-            SetColliderSize(new Vector2(originalSize.x, crouchHeight), originalOffset);
-            transform.position = new Vector2(transform.position.x, transform.position.y - deltaY);
+            float deltaY = (originalSize.y - _crouchHeight) * 0.5f;
+            Vector2 newOffset = new Vector2(originalOffset.x, originalOffset.y - deltaY);
+            SetColliderSize(new Vector2(originalSize.x, _crouchHeight), newOffset);
         }
         else if (!crouchInput && isCrouching)
         {
             isCrouching = false;
-            float deltaY = (originalSize.y - crouchHeight) * 0.5f;
             SetColliderSize(originalSize, originalOffset);
-            transform.position = new Vector2(transform.position.x, transform.position.y + deltaY);
         }
     }
 
@@ -212,7 +227,7 @@ public class PlayerMove : MonoBehaviour
         if (!isWallClimbing) return;
 
         if (wallClimbInput > 0.5f)
-            rb.velocity = new Vector2(rb.velocity.x * 0.3f, wallClimbSpeed);
+            rb.velocity = new Vector2(rb.velocity.x * 0.3f, _wallClimbSpeed);
         else if (wallClimbInput < -0.5f)
             rb.velocity = new Vector2(rb.velocity.x * 0.3f, -wallClimbSpeed);
         else
@@ -223,7 +238,7 @@ public class PlayerMove : MonoBehaviour
     {
         if (isWallClimbing) return;
 
-        float multiplier = rb.velocity.y < 0 ? fallGravityMultiplier : gravityMultiplier;
+        float multiplier = rb.velocity.y < 0 ? _fallGravityMultiplier : _gravityMultiplier;
         rb.velocity += Vector2.up * (Physics2D.gravity.y * multiplier * Time.fixedDeltaTime);
     }
 

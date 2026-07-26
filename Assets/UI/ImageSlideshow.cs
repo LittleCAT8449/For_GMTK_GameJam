@@ -9,6 +9,11 @@ public class ImageSlideshow : UIMove
     [SerializeField] private float cycleInterval = 30f;
     [SerializeField] private float showDuration = 5f;
 
+    [Header("Deadline")]
+    [SerializeField] private PlayerHealth playerHealth;
+    [SerializeField] private SatietyUI satietyUI;
+    [SerializeField] private int requiredEatCount = 3;
+
     private int currentIndex;
     private float stateTimer;
 
@@ -53,6 +58,22 @@ public class ImageSlideshow : UIMove
                 if (stateTimer >= showDuration)
                 {
                     stateTimer = 0f;
+
+                    if (currentIndex == sprites.Count - 1)
+                    {
+                        if (SleepZone.PlayerInAnyZone && satietyUI != null && satietyUI.CurrentEatCount >= requiredEatCount)
+                        {
+                            satietyUI.ConsumeSatiety(requiredEatCount);
+                            playerHealth?.Respawn();
+                        }
+                        else
+                        {
+                            playerHealth?.Kill();
+                        }
+                        Reset();
+                        return;
+                    }
+
                     Close();
                     state = SlideState.Closing;
                 }

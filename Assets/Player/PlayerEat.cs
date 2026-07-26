@@ -5,6 +5,7 @@ public class PlayerEat : MonoBehaviour
     [SerializeField] private float holdDuration = 0.5f;
     [SerializeField] private KeyCode eatKey = KeyCode.E;
     [SerializeField] private SatietyUI satietyUI;
+    [SerializeField] private PlayerHealth playerHealth;
 
     private float holdTimer;
 
@@ -24,6 +25,7 @@ public class PlayerEat : MonoBehaviour
                     {
                         Debug.Log($"吃了: {food.itemName}");
                         satietyUI?.OnEat();
+                        playerHealth?.Heal(food.healAmount);
                     }
                 }
             }

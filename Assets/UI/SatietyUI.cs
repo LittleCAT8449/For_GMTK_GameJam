@@ -10,6 +10,15 @@ public class SatietyUI : UIMove
 
     private int eatCount;
 
+    public int CurrentEatCount => eatCount;
+
+    public void ConsumeSatiety(int amount)
+    {
+        eatCount = Mathf.Max(0, eatCount - amount);
+        if (fillImage != null)
+            fillImage.fillAmount = eatCount / (float)maxEatCount;
+    }
+
     public void OnEat()
     {
         Open();

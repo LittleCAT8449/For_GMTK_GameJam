@@ -28,6 +28,7 @@ public class Enemy : MonoBehaviour
 
     private enum State { Wander, Chase, Attack }
     private State currentState;
+    private State previousState;
 
     private void Awake()
     {
@@ -52,6 +53,13 @@ public class Enemy : MonoBehaviour
             currentState = State.Chase;
         else
             currentState = State.Wander;
+
+        if (currentState != previousState)
+        {
+            if ((currentState == State.Chase || currentState == State.Attack) && previousState == State.Wander)
+                OneTimeTip.FindByTipId("enemy")?.Show();
+            previousState = currentState;
+        }
 
         if (attackTimer > 0)
             attackTimer -= Time.deltaTime;
