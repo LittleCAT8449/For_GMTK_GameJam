@@ -30,6 +30,18 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private Vector2 groundCheckSize = new Vector2(0.8f, 0.1f);
     [SerializeField] private LayerMask groundLayer;
 
+    [Header("Audio")]
+    [SerializeField] private float footstepInterval = 0.4f;
+    [SerializeField] private AudioClip footstepClip;
+    [Range(0, 1)] [SerializeField] private float footstepVolume = 1f;
+    [SerializeField] private AudioClip jumpClip;
+    [Range(0, 1)] [SerializeField] private float jumpVolume = 1f;
+
+    [Header("Sprite Squash")]
+    [SerializeField] private bool enableSquash = true;
+    [SerializeField] private float squashAmount = 0.15f;
+    [SerializeField] private float squashSpeed = 10f;
+
     public float maxSpeed => _maxSpeed;
     public float acceleration => _acceleration;
     public float airControlMultiplier => _airControlMultiplier;
@@ -56,6 +68,15 @@ public class PlayerMove : MonoBehaviour
     private float wallClimbInput;
     private int jumpCount;
 
+    private bool wasGrounded;
+    private bool hasJumped;
+    private float footstepTimer;
+    private AudioSource footstepAudio;
+    private AudioSource jumpAudio;
+    private bool wasWalking;
+    private float squash;
+    private float originalScaleY;
+
     public bool IsSwimming { get; set; }
     public bool IsOnLadder { get; set; }
     public bool IsOnCeiling { get; set; }
@@ -65,6 +86,18 @@ public class PlayerMove : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         col = GetComponent<Collider2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
+
+        footstepAudio = gameObject.AddComponent<AudioSource>();
+        footstepAudio.playOnAwake = false;
+        footstepAudio.loop = false;
+        footstepAudio.spatialBlend = 0f;
+
+        jumpAudio = gameObject.AddComponent<AudioSource>();
+        jumpAudio.playOnAwake = false;
+        jumpAudio.loop = false;
+        jumpAudio.spatialBlend = 0f;
+
+        originalScaleY = Mathf.Abs(transform.localScale.y);
 
         if (col is BoxCollider2D box)
         {
@@ -87,6 +120,14 @@ public class PlayerMove : MonoBehaviour
         CheckGround();
         CheckWall();
 
+        if (isGrounded && !wasGrounded && hasJumped)
+        {
+            AudioManager.Instance?.PlayLand();
+            hasJumped = false;
+        }
+
+        wasGrounded = isGrounded;
+
         if (isGrounded)
             jumpCount = 0;
 
@@ -97,6 +138,9 @@ public class PlayerMove : MonoBehaviour
             jumpPressed = true;
 
         FlipSprite();
+
+        HandleFootstep();
+        UpdateSquash();
     }
 
     private void FixedUpdate()
@@ -140,8 +184,61 @@ public class PlayerMove : MonoBehaviour
         }
     }
 
+    private void HandleFootstep()
+    {
+        bool walking = isGrounded && moveInput != 0 && !isCrouching && !IsSwimming && !IsOnLadder;
+
+        if (walking)
+        {
+            footstepTimer -= Time.deltaTime;
+            if (footstepTimer <= 0f)
+            {
+                footstepTimer = footstepInterval;
+                squash = 1f;
+                if (footstepClip != null)
+                {
+                    footstepAudio.clip = footstepClip;
+                    footstepAudio.volume = footstepVolume;
+                    footstepAudio.Play();
+                }
+            }
+        }
+        else
+        {
+            footstepTimer = 0f;
+            if (wasWalking)
+                footstepAudio.Stop();
+        }
+
+        wasWalking = walking;
+    }
+
+    private void UpdateSquash()
+    {
+        if (!enableSquash) return;
+
+        if (squash > 0f)
+        {
+            squash -= squashSpeed * Time.deltaTime;
+            if (squash < 0f) squash = 0f;
+        }
+
+        Vector3 scale = transform.localScale;
+        scale.y = originalScaleY - squash * squashAmount;
+        transform.localScale = scale;
+    }
+
     private void HandleJump()
     {
+        hasJumped = true;
+
+        if (jumpClip != null)
+        {
+            jumpAudio.clip = jumpClip;
+            jumpAudio.volume = jumpVolume;
+            jumpAudio.Play();
+        }
+
         if (isCrouching)
         {
             isCrouching = false;

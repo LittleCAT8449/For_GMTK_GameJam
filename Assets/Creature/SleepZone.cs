@@ -61,6 +61,7 @@ using UnityEngine;
         playerHealth?.SetRespawnPosition(transform.position);
         playerHealth?.Respawn();
         imageSlideshow?.Reset();
+        AudioManager.Instance?.PlaySleep();
         Debug.Log("Player slept!");
     }
 }

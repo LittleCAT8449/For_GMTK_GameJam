@@ -20,11 +20,20 @@ public class Enemy : MonoBehaviour
     [SerializeField] private float attackCooldown = 1f;
     [SerializeField] private int attackDamage = 1;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip moveClip;
+    [SerializeField] private AudioClip attackClip;
+    [Range(0, 1)] [SerializeField] private float moveVolume = 0.8f;
+    [Range(0, 1)] [SerializeField] private float attackVolume = 1f;
+
     private Transform player;
     private Rigidbody2D rb;
     private Vector2 moveDirection;
     private float stateTimer;
     private float attackTimer;
+
+    private AudioSource moveAudio;
+    private AudioSource attackAudio;
 
     private enum State { Wander, Chase, Attack }
     private State currentState;
@@ -34,6 +43,16 @@ public class Enemy : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         PickNewWanderDirection();
+
+        moveAudio = gameObject.AddComponent<AudioSource>();
+        moveAudio.playOnAwake = false;
+        moveAudio.loop = true;
+        moveAudio.spatialBlend = 1f;
+
+        attackAudio = gameObject.AddComponent<AudioSource>();
+        attackAudio.playOnAwake = false;
+        attackAudio.loop = false;
+        attackAudio.spatialBlend = 1f;
     }
 
     private void Start()
@@ -75,6 +94,19 @@ public class Enemy : MonoBehaviour
         }
 
         rb.velocity = new Vector2(moveDirection.x * GetCurrentSpeed(), rb.velocity.y);
+
+        if (currentState != State.Attack && rb.velocity.magnitude > 0.1f)
+        {
+            if (moveClip == null) { Debug.LogWarning("Enemy: moveClip 未拖入"); }
+            else if (moveAudio.clip != moveClip)
+            {
+                moveAudio.clip = moveClip;
+                moveAudio.volume = moveVolume;
+            }
+            if (!moveAudio.isPlaying && moveClip != null) moveAudio.Play();
+        }
+        else
+            moveAudio.Stop();
     }
 
     private void UpdateWander()
@@ -112,6 +144,14 @@ public class Enemy : MonoBehaviour
     private void Attack()
     {
         Debug.Log($"Enemy attacked player for {attackDamage} damage");
+        if (attackClip != null)
+        {
+            attackAudio.clip = attackClip;
+            attackAudio.volume = attackVolume;
+            attackAudio.Play();
+        }
+        else
+            Debug.LogWarning("Enemy: attackClip 未拖入");
     }
 
     private float GetCurrentSpeed()

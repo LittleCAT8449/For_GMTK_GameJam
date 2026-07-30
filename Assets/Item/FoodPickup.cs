@@ -13,6 +13,7 @@ public class FoodPickup : MonoBehaviour
                 Inventory.instance?.AddItem(food.itemData);
 
             OneTimeTip.FindByTipId("food")?.Show();
+            AudioManager.Instance?.PlayFoodPickup();
 
             Destroy(gameObject);
         }

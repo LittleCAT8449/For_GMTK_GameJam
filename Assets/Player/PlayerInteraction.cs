@@ -33,6 +33,7 @@ public class PlayerInteraction : MonoBehaviour
         onLadder = false;
         rb.gravityScale = 1f;
         if (playerMove != null) playerMove.IsOnLadder = false;
+        AudioManager.Instance?.StopClimb();
     }
 
     public void AttachCeiling()
@@ -54,6 +55,15 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (onCeiling && Input.GetKeyDown(KeyCode.LeftShift))
             DetachCeiling();
+
+        if (onLadder)
+        {
+            float v = Input.GetAxisRaw("Vertical");
+            if (Mathf.Abs(v) > 0.1f)
+                AudioManager.Instance?.StartClimb();
+            else
+                AudioManager.Instance?.StopClimb();
+        }
     }
 
     private void FixedUpdate()

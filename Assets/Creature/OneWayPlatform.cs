@@ -27,13 +27,13 @@ public class OneWayPlatform : MonoBehaviour
     private void Update()
     {
         if (playerCollider != null && Input.GetKeyDown(KeyCode.S))
-            StartCoroutine(DropPlayer());
+            StartCoroutine(DropPlayer(playerCollider));
     }
 
-    private System.Collections.IEnumerator DropPlayer()
+    private System.Collections.IEnumerator DropPlayer(Collider2D player)
     {
-        Physics2D.IgnoreCollision(playerCollider, platformCollider, true);
+        Physics2D.IgnoreCollision(player, platformCollider, true);
         yield return new WaitForSeconds(dropDuration);
-        Physics2D.IgnoreCollision(playerCollider, platformCollider, false);
+        Physics2D.IgnoreCollision(player, platformCollider, false);
     }
 }
